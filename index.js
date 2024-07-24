@@ -17,7 +17,7 @@ mongoose.connect(process.env.MONGO_URI, {
 
 
 const userSchema = new mongoose.Schema({
-  name: String
+  username: String
 });
 
 const exerciseSchema = new mongoose.Schema({
@@ -52,7 +52,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.post('/api/users', (req, res) => {
   const username = req.body['username'];
   const newUser = new User({
-    name: username
+    username: username
   });
 
   newUser.save()
@@ -74,17 +74,6 @@ app.get('/api/users', (req, res) => {
     res.json(data);
   })
   .catch(error => console.error(`Error finding users: ${error}`));
-
-  // (err, data) => {
-  //   if(err) {
-  //     return console.error(`Error finding users: ${err}`);
-  //   }
-  //   else {
-  //     allUsers.push(data);
-  //   }
-  // }
-  // console.log(allUsers);
-  // res.json(allUsers);
 
 })
 
