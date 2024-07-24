@@ -46,6 +46,15 @@ app.get('/', (req, res) => {
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
+
+/**
+ * 
+ * @param {String} dateString 
+ * @returns String
+ */
+const formatDateString = dateString => dateString.slice(0, dateString.indexOf('T'));
+
+
 /**
  * Create new user
  */
@@ -127,11 +136,21 @@ app.get('/api/users/delete', (req, res) => {
   `);
 });
 
-
+/**
+ * POSTS a new exercises that is logged under a user.
+ * The JSON Response should look like:
+ * {
+ *  _id: string,
+ * username: string,
+ * date: string,
+ * duration: number,
+ * description: string
+ * }
+ */
 app.post('/api/users/:_id/exercises', async (req, res) => {
   const userId = req.body[':_id'];
-  const date = req.body['date'];
-  const duration = req.body['duration'];
+  const date = req.body['date'] || new Date();
+  let duration = req.body['duration'];
   const description = req.body['description'];
 
   console.log(`Variables:\nuserId: ${userId}\ndate: ${date}\nduration: ${duration}\ndescription: ${description}`)
@@ -141,13 +160,14 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     if(!user) {
       return res.status(404).json({error: 'User not found'});
     }
+    console.log(`The current user is: ${user}`)
     // console.log(`USER: ${user}`)
-    const name = user.name;
+    // const name = user.name;
     // console.log(`NAME : ${name}`)
     const newExercise = new Exercise({
       _id: userId,
-      username: name,
-      date: date.toString(),
+      username: user.username,
+      date: formatDateString(date.toString()),
       duration: duration,
       description: description
     });
@@ -161,8 +181,8 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     // res.json(newExercise);
     res.json({
       _id: userId,
-      username: name,
-      date: date,
+      username: user.username,
+      date: date.toDateString(),
       duration: duration,
       description: description
     });
@@ -178,6 +198,4 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
 })
-
-
 
