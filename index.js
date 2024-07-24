@@ -46,6 +46,9 @@ app.get('/', (req, res) => {
 
 app.use(bodyParser.urlencoded({ extended: false }));
 
+/**
+ * Create new user
+ */
 app.post('/api/users', (req, res) => {
   const username = req.body['username'];
   const newUser = new User({
@@ -57,6 +60,32 @@ app.post('/api/users', (req, res) => {
   .catch((error) => console.error(`Uh oh! Error: ${error}`));
   
   res.json(newUser);
+});
+
+/**
+ * Retrieve list of all users
+ */
+app.get('/api/users', (req, res) => {
+
+  let allUsers = [];
+  User.find()
+  .then((data) => {
+    console.log(data);
+    res.json(data);
+  })
+  .catch(error => console.error(`Error finding users: ${error}`));
+
+  // (err, data) => {
+  //   if(err) {
+  //     return console.error(`Error finding users: ${err}`);
+  //   }
+  //   else {
+  //     allUsers.push(data);
+  //   }
+  // }
+  // console.log(allUsers);
+  // res.json(allUsers);
+
 })
 
 app.post('/api/users/:_id/exercises', async (req, res) => {
