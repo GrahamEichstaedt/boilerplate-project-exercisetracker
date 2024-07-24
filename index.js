@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
 });
 
 const exerciseSchema = new mongoose.Schema({
-  username: userSchema,
+  username: String,
   date: Date,
   duration: Number,
   description: String
@@ -49,11 +49,17 @@ app.use(bodyParser.urlencoded({ extended: false }));
 
 /**
  * 
- * @param {String} dateString 
+ * @param {Date} date 
  * @returns String
  */
-const formatDateString = dateString => dateString.slice(0, dateString.indexOf('T'));
-
+const formatDate = date =>  {
+  // let dateFormat = date.toDateString();
+  // console.log(dateFormat);
+  // console.log(dateFormat .slice(0, date.toDateString().indexOf('T')));
+  // return  dateFormat;
+  return date.toDateString();
+  // const formatDate = date => dateString.slice(0, dateString.indexOf('T'));
+}
 
 /**
  * Create new user
@@ -148,9 +154,10 @@ app.get('/api/users/delete', (req, res) => {
  * }
  */
 app.post('/api/users/:_id/exercises', async (req, res) => {
-  const userId = req.body[':_id'];
-  const date = req.body['date'] || new Date();
-  let duration = req.body['duration'];
+  const userId = req.params._id;
+  let date;
+  req.body.date ? date = new Date(req.body.date) : date = new Date();
+  let duration = Number(req.body['duration']);
   const description = req.body['description'];
 
   console.log(`Variables:\nuserId: ${userId}\ndate: ${date}\nduration: ${duration}\ndescription: ${description}`)
@@ -160,32 +167,37 @@ app.post('/api/users/:_id/exercises', async (req, res) => {
     if(!user) {
       return res.status(404).json({error: 'User not found'});
     }
-    console.log(`The current user is: ${user}`)
-    // console.log(`USER: ${user}`)
-    // const name = user.name;
-    // console.log(`NAME : ${name}`)
+    console.log(`The current user is: ${user}`);
+    console.log(`User's userId: ${user._id}`);
+    console.log(`User's username: ${user.username}`)
+    console.log(`Date: ${formatDate(date)} typeof ${typeof date}`);
+    console.log(`Duration: ${duration}`);
+    console.log(`Description: ${description}`)
+
+
     const newExercise = new Exercise({
       _id: userId,
       username: user.username,
-      date: formatDateString(date.toString()),
+      date: date,
       duration: duration,
       description: description
     });
 
-    newExercise.save()
-    .then( savedExercise => console.log(`Exercise Saved: ${savedExercise}`))
-    .catch( error => console.error(`Uh oh! Error: ${error}`));
 
+    console.log(newExercise);
+    const savedExercise = await newExercise.save();
 
-    // console.log(`NAME: ${name}`)
-    // res.json(newExercise);
-    res.json({
-      _id: userId,
-      username: user.username,
-      date: date.toDateString(),
-      duration: duration,
-      description: description
-    });
+    const formattedExercise = {
+      _id: savedExercise._id,
+      username: savedExercise.username,
+      date: savedExercise.date.toDateString(),
+      duration: savedExercise.duration,
+      description: savedExercise.description
+    }
+    // .then( savedExercise => console.log(`Exercise Saved: ${savedExercise} - ${savedExercise.date}`))
+    // .catch( error => console.error(`Uh oh! Error: ${error}`));
+
+    res.json(formattedExercise);
   }
   catch(error) {
     console.error(error);
