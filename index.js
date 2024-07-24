@@ -77,6 +77,57 @@ app.get('/api/users', (req, res) => {
 
 })
 
+/**
+ * Endpoint to delete all users
+ */
+app.delete('/api/users/delete', async (req, res) => {
+  try {
+    await mongoose.connection.db.dropCollection('users'); 
+    console.log('User collection dropped.');
+    res.json({ message: 'User collection dropped.' });
+  } catch (error) {
+    console.error('Error dropping collection:', error);
+    res.status(500).json({ error: 'Failed to drop collection.' }); 
+  }
+});
+
+
+/**
+ * Endpoint to allow client access to wipe database
+ */
+app.get('/api/users/delete', (req, res) => {
+  res.send(`
+    <html>
+      <head>
+        <title>Delete Users Confirmation</title>
+      </head>
+      <body>
+        <h1>Delete All Users</h1>
+        <button onclick="confirmDelete()">Delete</button>
+
+        <script>
+          function confirmDelete() {
+            if (confirm('Are you sure you want to delete ALL users? This cannot be undone.')) {
+              fetch('/api/users/delete', { method: 'DELETE' })
+                .then(response => {
+                  if (response.ok) {
+                    alert('All users deleted successfully.');
+                  } else {
+                    alert('An error occurred while deleting users.');
+                  }
+                })
+                .catch(error => console.error('Network error:', error));
+            } else {
+              alert('Delete cancelled.');
+            }
+          }
+        </script>
+      </body>
+    </html>
+  `);
+});
+
+
 app.post('/api/users/:_id/exercises', async (req, res) => {
   const userId = req.body[':_id'];
   const date = req.body['date'];
