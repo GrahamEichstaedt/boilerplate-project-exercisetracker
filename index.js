@@ -52,14 +52,16 @@ app.use(bodyParser.urlencoded({ extended: false }));
  * @param {Date} date 
  * @returns String
  */
-const formatDate = date =>  {
-  // let dateFormat = date.toDateString();
-  // console.log(dateFormat);
-  // console.log(dateFormat .slice(0, date.toDateString().indexOf('T')));
-  // return  dateFormat;
-  return date.toDateString();
-  // const formatDate = date => dateString.slice(0, dateString.indexOf('T'));
-}
+const formatDate = (date) => {
+  const options = {
+    weekday: 'short',
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
+  };
+  return new Date(date).toLocaleDateString('en-US', options);
+};
+
 
 /**
  * Create new user
@@ -153,59 +155,95 @@ app.get('/api/users/delete', (req, res) => {
  * description: string
  * }
  */
-app.post('/api/users/:_id/exercises', async (req, res) => {
-  const userId = req.params._id;
-  let date;
-  req.body.date ? date = new Date(req.body.date) : date = new Date();
-  let duration = Number(req.body['duration']);
-  const description = req.body['description'];
+// app.post('/api/users/:_id/exercises', async (req, res) => {
+//   const userId = req.params._id;
+//   let date;
+//   req.body.date ? date = new Date(req.body.date) : date = new Date();
+//   let duration = Number(req.body['duration']);
+//   const description = req.body['description'];
 
-  console.log(`Variables:\nuserId: ${userId}\ndate: ${date}\nduration: ${duration}\ndescription: ${description}`)
+//   console.log(`Variables:\nuserId: ${userId}\ndate: ${date}\nduration: ${duration}\ndescription: ${description}`)
 
-  try {
-    const user = await User.findById(userId);
-    if(!user) {
-      return res.status(404).json({error: 'User not found'});
-    }
-    console.log(`The current user is: ${user}`);
-    console.log(`User's userId: ${user._id}`);
-    console.log(`User's username: ${user.username}`)
-    console.log(`Date: ${formatDate(date)} typeof ${typeof date}`);
-    console.log(`Duration: ${duration}`);
-    console.log(`Description: ${description}`)
+//   try {
+//     const user = await User.findById(userId);
+//     if(!user) {
+//       return res.status(404).json({error: 'User not found'});
+//     }
+//     console.log(`The current user is: ${user}`);
+//     console.log(`User's userId: ${user._id}`);
+//     console.log(`User's username: ${user.username}`)
+//     console.log(`Date: ${formatDate(date)} typeof ${typeof date}`);
+//     console.log(`Duration: ${duration}`);
+//     console.log(`Description: ${description}`)
 
 
-    const newExercise = new Exercise({
-      _id: userId,
-      username: user.username,
-      date: date,
-      duration: duration,
-      description: description
+//     const newExercise = new Exercise({
+//       _id: userId,
+//       username: user.username,
+//       date: formatDate(date),
+//       duration: duration,
+//       description: description
+//     });
+
+
+//     console.log(newExercise);
+//     const savedExercise = await newExercise.save();
+
+//     const formattedExercise = {
+//       _id: savedExercise._id,
+//       username: savedExercise.username,
+//       date: savedExercise.date,
+//       // date: savedExercise.date.toDateString(),
+//       duration: savedExercise.duration,
+//       description: savedExercise.description
+//     }
+//     // .then( savedExercise => console.log(`Exercise Saved: ${savedExercise} - ${savedExercise.date}`))
+//     // .catch( error => console.error(`Uh oh! Error: ${error}`));
+
+//     res.json(formattedExercise);
+//   }
+//   catch(error) {
+//     console.error(error);
+//     res.status(500).json({error: `Ruh roh: ${error}`});
+//   }
+// })
+
+app.post('/api/users/:_id/exercises', (req, res) => {
+  const _id = req.params._id;
+  const { description, duration, date } = req.body;
+
+  const formattedDate = !date ? new Date() : new Date(date);
+  const data = { _id, description, duration, date: formattedDate };
+
+  exerciseController
+    .createAndSaveExercise(data)
+    .then((result) => {
+      return res.json(result);
+    })
+    .catch((err) => {
+      console.log(err);
     });
+});
 
+app.get('/api/users/:_id/logs', (req, res) => {
+  const userId = req.params._id;
+  let { from, to, limit } = req.query;
 
-    console.log(newExercise);
-    const savedExercise = await newExercise.save();
+  if (to) to = new Date(to);
+  if (from) from = new Date(from);
+  if (limit) limit = parseInt(limit);
 
-    const formattedExercise = {
-      _id: savedExercise._id,
-      username: savedExercise.username,
-      date: savedExercise.date.toDateString(),
-      duration: savedExercise.duration,
-      description: savedExercise.description
-    }
-    // .then( savedExercise => console.log(`Exercise Saved: ${savedExercise} - ${savedExercise.date}`))
-    // .catch( error => console.error(`Uh oh! Error: ${error}`));
+  const queryParams = { from, to, limit };
 
-    res.json(formattedExercise);
-  }
-  catch(error) {
-    console.error(error);
-    res.status(500).json({error: `Ruh roh: ${error}`});
-  }
-})
-
-
+  exerciseController
+    .retrieveExercisesLog(userId, queryParams)
+    .then((result) => {
+      return res.json(result);
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)
